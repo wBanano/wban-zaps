@@ -1,0 +1,35 @@
+name: CI
+
+# Controls when the action will run.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-smart-contract:
+    name: "Smart Contract"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - run: npm install -g yarn
+      - name: Compile & Test
+        env:
+          ARCHIVE_NODE: ${{ secrets.ARCHIVE_NODE }}
+        run: |
+          yarn
+          yarn coverage
+      - name: Checks
+        env:
+          ARCHIVE_NODE: ${{ secrets.ARCHIVE_NODE }}
+        run: |
+          yarn lint
+          yarn coverage
