@@ -35,7 +35,7 @@ class PermitUtil {
 		value: BigNumberish,
 		nonce: BigNumber,
 		deadline: BigNumberish,
-		chainId: number,
+		chainId: number
 	): Promise<Signature> {
 		const domain: TypedDataDomain = { name, version, chainId, verifyingContract }
 		const types: Record<string, Array<TypedDataField>> = {

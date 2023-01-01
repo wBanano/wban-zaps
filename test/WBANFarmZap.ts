@@ -61,7 +61,7 @@ describe("WBANFarmZap", () => {
 	describe("Zap in", () => {
 		it("should add liquidity from wBAN", async () => {
 			const amount = parseEther("77777").mul(2)
-			const minExpectedEth = parseEther("0.28")
+			const minExpectedEth = parseEther("0.29")
 			expect(await wban.balanceOf(user.address)).to.be.greaterThanOrEqual(amount)
 			await wban.connect(user).approve(zap.address, amount)
 			// user zaps in from wBAN
@@ -264,6 +264,28 @@ describe("WBANFarmZap", () => {
 			expect(await pair.balanceOf(zap.address)).to.equal(0)
 			// user shouldn't have some WETH
 			expect(await weth.balanceOf(user.address)).to.equal(0)
+		})
+	})
+
+	describe("Swap Estimates", () => {
+		it("should estimate ETH amount from wBAN", async () => {
+			const amount = parseEther("77777").mul(2)
+			const minExpectedEth = parseEther("0.29")
+			const [swapAmountIn, swapAmountOut, swapTokenOut] = await zap.estimateSwap(wban.address, amount)
+			expect(swapAmountIn).to.be.closeTo(amount.div(2), parseEther("600"))
+			expect(swapTokenOut).to.eq(weth.address)
+			expect(swapAmountOut).to.be.above(minExpectedEth)
+			expect(swapAmountOut).to.be.closeTo(minExpectedEth, parseEther("0.0002"))
+		})
+
+		it("should estimate wBAN amount from ETH", async () => {
+			const amount = parseEther("0.069").mul(2)
+			const minExpectedWBAN = parseEther("17800")
+			const [swapAmountIn, swapAmountOut, swapTokenOut] = await zap.estimateSwap(weth.address, amount)
+			expect(swapAmountIn).to.be.closeTo(amount.div(2), parseEther("0.0001"))
+			expect(swapTokenOut).to.eq(wban.address)
+			expect(swapAmountOut).to.be.above(minExpectedWBAN)
+			expect(swapAmountOut).to.be.closeTo(minExpectedWBAN, parseEther("500"))
 		})
 	})
 })

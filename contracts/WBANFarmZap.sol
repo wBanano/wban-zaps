@@ -113,6 +113,26 @@ contract WBANFarmZap is Ownable, Pausable {
         _returnAssets(path);
     }
 
+    function estimateSwap(address tokenIn, uint256 fullInvestmentIn)
+        public
+        view
+        returns (
+            uint256 swapAmountIn,
+            uint256 swapAmountOut,
+            address swapTokenOut
+        )
+    {
+        bool isInputA = pair.token0() == tokenIn;
+        require(isInputA || pair.token1() == tokenIn, "Zap: Input token not present in liquidity pair");
+
+        (uint256 reserveA, uint256 reserveB, ) = pair.getReserves();
+        (reserveA, reserveB) = isInputA ? (reserveA, reserveB) : (reserveB, reserveA);
+
+        swapAmountIn = _getSwapAmount(fullInvestmentIn, reserveA, reserveB);
+        swapAmountOut = router.getAmountOut(swapAmountIn, reserveA, reserveB);
+        swapTokenOut = isInputA ? pair.token1() : pair.token0();
+    }
+
     function _swapAndAddLiquidity(address tokenIn, uint256 tokenAmountOutMin) internal {
         (uint256 reserveA, uint256 reserveB, ) = pair.getReserves();
         bool isInputA = pair.token0() == tokenIn;

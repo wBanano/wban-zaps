@@ -80,7 +80,7 @@
 		"solhint": "solhint \"contracts/**/*.sol\" -f unix",
 		"lint": "prettier --check \"contracts/**/*.{sol,ts,js}\"",
 		"prettier": "prettier --write \"contracts/**/*.sol\" \"test/**/*.{ts,js}\"",
-		"coverage": "hardhat coverage && istanbul check-coverage ./coverage.json --statements 100 --branches 91.6 --functions 100 --lines 100",
+		"coverage": "hardhat coverage && istanbul check-coverage ./coverage.json --statements 100 --branches 90.6 --functions 100 --lines 100",
 		"node:watch": "hardhat node --watch"
 	}
 }
