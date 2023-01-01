@@ -71,6 +71,48 @@ contract WBANFarmZap is Ownable, Pausable {
         _swapAndAddLiquidity(WETH, tokenAmountOutMin);
     }
 
+    function zapOutToTokenWithPermit(
+        uint256 withdrawAmount,
+        address desiredToken,
+        uint256 desiredTokenOutMin,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        IERC20Permit(address(pair)).permit(msg.sender, address(this), withdrawAmount, deadline, v, r, s);
+        zapOutToToken(withdrawAmount, desiredToken, desiredTokenOutMin);
+    }
+
+    function zapOutToToken(
+        uint256 withdrawAmount,
+        address desiredToken,
+        uint256 desiredTokenOutMin
+    ) public {
+        address token0 = pair.token0();
+        address token1 = pair.token1();
+        require(token0 == desiredToken || token1 == desiredToken, "Zap: desired token not present in liquidity pair");
+
+        IERC20(address(pair)).safeTransferFrom(msg.sender, address(this), withdrawAmount);
+        _removeLiquidity(address(this));
+
+        address swapToken = token1 == desiredToken ? token0 : token1;
+        address[] memory path = new address[](2);
+        path[0] = swapToken;
+        path[1] = desiredToken;
+
+        _approveTokenIfNeeded(path[0], address(router));
+        router.swapExactTokensForTokens(
+            IERC20(swapToken).balanceOf(address(this)),
+            desiredTokenOutMin,
+            path,
+            address(this),
+            block.timestamp
+        );
+
+        _returnAssets(path);
+    }
+
     function _swapAndAddLiquidity(address tokenIn, uint256 tokenAmountOutMin) internal {
         (uint256 reserveA, uint256 reserveB, ) = pair.getReserves();
         bool isInputA = pair.token0() == tokenIn;
@@ -107,6 +149,12 @@ contract WBANFarmZap is Ownable, Pausable {
 
         IERC20(address(pair)).safeTransfer(msg.sender, amountLiquidity);
         _returnAssets(path);
+    }
+
+    function _removeLiquidity(address to) private returns (uint256, uint256) {
+        IERC20(address(pair)).safeTransfer(address(pair), IERC20(address(pair)).balanceOf(address(this)));
+        (uint256 amount0, uint256 amount1) = pair.burn(to);
+        return (amount0, amount1);
     }
 
     function _getSwapAmount(

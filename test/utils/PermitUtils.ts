@@ -20,7 +20,8 @@ class PermitUtil {
 			spender,
 			value,
 			nonce,
-			deadline
+			deadline,
+			await owner.getChainId()
 		)
 		return sig
 	}
@@ -33,9 +34,9 @@ class PermitUtil {
 		spender: string,
 		value: BigNumberish,
 		nonce: BigNumber,
-		deadline: BigNumberish
+		deadline: BigNumberish,
+		chainId: number,
 	): Promise<Signature> {
-		const chainId = await owner.getChainId()
 		const domain: TypedDataDomain = { name, version, chainId, verifyingContract }
 		const types: Record<string, Array<TypedDataField>> = {
 			Permit: [

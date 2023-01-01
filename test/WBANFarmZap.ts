@@ -11,7 +11,7 @@ import {
 } from "../artifacts/typechain"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { resetForkedChain, makeForkedChainSnapshot } from "./utils/forking"
-import { parseEther, parseUnits } from "ethers/lib/utils"
+import { formatEther, parseEther, parseUnits } from "ethers/lib/utils"
 import PermitUtil from "./utils/PermitUtils"
 import { Signature } from "ethers"
 
@@ -23,6 +23,7 @@ describe("WBANFarmZap", () => {
 	let user: SignerWithAddress
 	let pair: IUniswapV2Pair
 	let wban: IERC20
+	let weth: IERC20
 	let usdc: IERC20
 
 	beforeEach(async () => {
@@ -39,6 +40,7 @@ describe("WBANFarmZap", () => {
 		const ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 		const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 		const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+		weth = IERC20__factory.connect(WETH, owner)
 		usdc = IERC20__factory.connect(USDC, owner)
 
 		// deploy Zap contract
@@ -84,7 +86,7 @@ describe("WBANFarmZap", () => {
 			const amount = parseEther("77777").mul(2)
 			const minExpectedEth = parseEther("0.28")
 			expect(await wban.balanceOf(user.address)).to.be.greaterThanOrEqual(amount)
-			// use permit feature instead
+			// use permit feature
 			const deadline = Date.now() + 30 * 60 * 1_000 // deadline of 30 minutes
 			const sig: Signature = await PermitUtil.createPermitSignature(
 				IERC20Permit__factory.connect(wban.address, owner),
@@ -160,6 +162,108 @@ describe("WBANFarmZap", () => {
 			await expect(
 				zap.connect(user).zapInFromToken(usdc.address, amount, minExpectedEth, { gasLimit: 500_000 })
 			).to.be.revertedWith("Zap: input token not present in liquidity pair")
+		})
+	})
+
+	describe("Zap out", () => {
+		it("should remove liquidity to wBAN", async () => {
+			const amount = parseEther("77777").mul(2)
+			const minExpectedEth = parseEther("0.28")
+			expect(await wban.balanceOf(user.address)).to.be.greaterThanOrEqual(amount)
+			// user zaps in from wBAN
+			const initialBalance = await wban.balanceOf(user.address)
+			await wban.connect(user).approve(zap.address, amount)
+			await zap.connect(user).zapInFromToken(wban.address, amount, minExpectedEth, { gasLimit: 500_000 })
+			const lpAmount = await pair.balanceOf(user.address)
+			// user zaps out to wBAN
+			await pair.connect(user).approve(zap.address, ethers.constants.MaxUint256)
+			await zap.connect(user).zapOutToToken(lpAmount, wban.address, amount.div(2).sub(parseEther("10000")))
+			expect(await wban.balanceOf(user.address)).to.be.closeTo(initialBalance, parseEther("500"))
+			// zap contract shouldn't have any token left
+			expect(await wban.balanceOf(zap.address)).to.equal(0)
+			expect(await pair.balanceOf(zap.address)).to.equal(0)
+		})
+
+		it("should remove liquidity to wBAN with permit", async () => {
+			const amount = parseEther("77777").mul(2)
+			const minExpectedEth = parseEther("0.28")
+			expect(await wban.balanceOf(user.address)).to.be.greaterThanOrEqual(amount)
+			// user zaps in from wBAN
+			const initialBalance = await wban.balanceOf(user.address)
+			await wban.connect(user).approve(zap.address, amount)
+			await zap.connect(user).zapInFromToken(wban.address, amount, minExpectedEth, { gasLimit: 500_000 })
+			const lpAmount = await pair.balanceOf(user.address)
+			// user zaps out to wBAN using permit
+			const deadline = Date.now() + 30 * 60 * 1_000 // deadline of 30 minutes
+			const nonce = await pair.nonces(user.address)
+			const sig: Signature = await PermitUtil.createPermitSignatureForToken(
+				await pair.name(),
+				"1",
+				pair.address,
+				user,
+				zap.address,
+				lpAmount,
+				nonce,
+				deadline,
+				1
+			)
+			await zap
+				.connect(user)
+				.zapOutToTokenWithPermit(
+					lpAmount,
+					wban.address,
+					amount.div(2).sub(parseEther("10000")),
+					deadline,
+					sig.v,
+					sig.r,
+					sig.s
+				)
+			expect(await wban.balanceOf(user.address)).to.be.closeTo(initialBalance, parseEther("500"))
+			// zap contract shouldn't have any token left
+			expect(await wban.balanceOf(zap.address)).to.equal(0)
+			expect(await pair.balanceOf(zap.address)).to.equal(0)
+		})
+
+		it("should remove liquidity to ETH with permit", async () => {
+			const amount = parseEther("0.069").mul(2)
+			const minExpectedWBAN = parseEther("17800")
+			// user zaps in from ETH
+			await zap.connect(user).zapInFromETH(minExpectedWBAN, { value: amount, gasLimit: 500_000 })
+			const lpAmount = await pair.balanceOf(user.address)
+			// user zaps out to wBAN using permit
+			const initialBalance = await user.getBalance()
+			const deadline = Date.now() + 30 * 60 * 1_000 // deadline of 30 minutes
+			const nonce = await pair.nonces(user.address)
+			const sig: Signature = await PermitUtil.createPermitSignatureForToken(
+				await pair.name(),
+				"1",
+				pair.address,
+				user,
+				zap.address,
+				lpAmount,
+				nonce,
+				deadline,
+				1
+			)
+			const receipt = await zap
+				.connect(user)
+				.zapOutToTokenWithPermit(
+					lpAmount,
+					weth.address,
+					amount.div(2).sub(parseEther("0.001")),
+					deadline,
+					sig.v,
+					sig.r,
+					sig.s
+				)
+			const tx = await receipt.wait()
+			const txFee = tx.gasUsed.mul(receipt.gasPrice!)
+			expect(await user.getBalance()).to.be.closeTo(initialBalance.sub(txFee).add(amount), parseEther("0.0005"))
+			// zap contract shouldn't have any token left
+			expect(await wban.balanceOf(zap.address)).to.equal(0)
+			expect(await pair.balanceOf(zap.address)).to.equal(0)
+			// user shouldn't have some WETH
+			expect(await weth.balanceOf(user.address)).to.equal(0)
 		})
 	})
 })
