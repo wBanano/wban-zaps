@@ -38,10 +38,20 @@ contract WBANFarmZap is Ownable, Pausable {
         WETH = _WETH;
     }
 
+    /**
+     * @dev needed in order to received ETH and then send them back to the user.
+     */
     receive() external payable {
         assert(msg.sender == WETH);
     }
 
+    /**
+     * Zap in from token `tokenId`.
+     * @param tokenIn the token to zap in from
+     * @param tokenInAmount the amount of `tokenIn` to create liquidity from
+     * @param tokenAmountOutMin the minimum amount of the other token from the pair expected with the swap
+     * @dev this function assumes an approval for `tokenId` was done previously for this contract
+     */
     function zapInFromToken(
         IERC20 tokenIn,
         uint256 tokenInAmount,
@@ -52,6 +62,16 @@ contract WBANFarmZap is Ownable, Pausable {
         _swapAndAddLiquidity(address(tokenIn), tokenAmountOutMin);
     }
 
+    /**
+     * Zap in from token `tokenId`, using permit feature (EIP-2612).
+     * @param tokenIn the token to zap in from
+     * @param tokenInAmount the amount of `tokenIn` to create liquidity from
+     * @param tokenAmountOutMin the minimum amount of the other token from the pair expected with the swap
+     * @param deadline deadline for the swap
+     * @param v permit signature
+     * @param r permit signature
+     * @param s permit signature
+     */
     function zapInFromTokenWithPermit(
         IERC20 tokenIn,
         uint256 tokenInAmount,
@@ -66,11 +86,25 @@ contract WBANFarmZap is Ownable, Pausable {
         _swapAndAddLiquidity(address(tokenIn), tokenAmountOutMin);
     }
 
+    /**
+     * Zap in from "ETH".
+     * @param tokenAmountOutMin the minimum amount of the other token from the pair expected with the swap
+     */
     function zapInFromETH(uint256 tokenAmountOutMin) external payable {
         IWETH(WETH).deposit{value: msg.value}();
         _swapAndAddLiquidity(WETH, tokenAmountOutMin);
     }
 
+    /**
+     * Zap out to token `desiredToken`, using permit feature (EIP-2612) of the LP token.
+     * @param withdrawAmount amount of LP to withdraw
+     * @param desiredToken the token to zap out to
+     * @param desiredTokenOutMin the minimum amount of the other token from the pair expected with the swap
+     * @param deadline deadline for the swap
+     * @param v permit signature
+     * @param r permit signature
+     * @param s permit signature
+     */
     function zapOutToTokenWithPermit(
         uint256 withdrawAmount,
         address desiredToken,
@@ -84,6 +118,13 @@ contract WBANFarmZap is Ownable, Pausable {
         zapOutToToken(withdrawAmount, desiredToken, desiredTokenOutMin);
     }
 
+    /**
+     * Zap out to token `desiredToken`.
+     * @param withdrawAmount amount of LP to withdraw
+     * @param desiredToken the token to zap out to
+     * @param desiredTokenOutMin the minimum amount of the other token from the pair expected with the swap
+     * @dev this function assumes an approval for `tokenId` was done previously for this contract
+     */
     function zapOutToToken(
         uint256 withdrawAmount,
         address desiredToken,
@@ -113,6 +154,14 @@ contract WBANFarmZap is Ownable, Pausable {
         _returnAssets(path);
     }
 
+    /**
+     * Estimate a swap from `tokenIn` for amount `fullInvestmentIn`
+     * @param tokenIn the input token
+     * @param fullInvestmentIn the input amount
+     * @return swapAmountIn the input amount which would be swapped
+     * @return swapAmountOut the output amount after such a swap
+     * @return swapTokenOut the address of the output token
+     */
     function estimateSwap(address tokenIn, uint256 fullInvestmentIn)
         public
         view
@@ -133,6 +182,12 @@ contract WBANFarmZap is Ownable, Pausable {
         swapTokenOut = isInputA ? pair.token1() : pair.token0();
     }
 
+    /**
+     * Swap optimal amount of `tokenIn` based on reserved to the other token of the pair
+     * and provide liquidity.
+     * @param tokenIn the input token
+     * @param tokenAmountOutMin the minimal expected amount of the other token after a partial swap
+     */
     function _swapAndAddLiquidity(address tokenIn, uint256 tokenAmountOutMin) internal {
         (uint256 reserveA, uint256 reserveB, ) = pair.getReserves();
         bool isInputA = pair.token0() == tokenIn;
@@ -171,6 +226,11 @@ contract WBANFarmZap is Ownable, Pausable {
         _returnAssets(path);
     }
 
+    /**
+     * Remove liquidity from the pool
+     * @return amount0 the amount of token0
+     * @return amount1 the amount of token1
+     */
     function _removeLiquidity(address to) private returns (uint256, uint256) {
         IERC20(address(pair)).safeTransfer(address(pair), IERC20(address(pair)).balanceOf(address(this)));
         (uint256 amount0, uint256 amount1) = pair.burn(to);
@@ -188,6 +248,10 @@ contract WBANFarmZap is Ownable, Pausable {
         swapAmount = investmentA - Babylonian.sqrt((halfInvestment * halfInvestment * nominator) / denominator);
     }
 
+    /**
+     * Return user assets
+     * @dev if WETH is involved it is unwrapped, so user gets back "ETH"
+     */
     function _returnAssets(address[] memory tokens) private {
         uint256 balance;
         for (uint256 i; i < tokens.length; i++) {
