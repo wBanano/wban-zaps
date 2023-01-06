@@ -1,10 +1,10 @@
 {
 	"name": "wban-zaps",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "wBAN Zap Contracts",
 	"author": "Wrap That Potassium <wrap-that-potassium@protonmail.com>",
 	"license": "AGPL-3.0-or-later",
-	"main": "dist/index.js",
+	"main": "dist/artifacts/typechain/index.js",
 	"types": "dist/artifacts/typechain/index.d.ts",
 	"repository": {
 		"type": "git",
