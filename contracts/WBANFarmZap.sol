@@ -13,7 +13,8 @@ import "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol";
 import "@uniswap/lib/contracts/libraries/Babylonian.sol";
 
 /**
- * Zap in/out contract for wBAN farms
+ * @title Zap in/out contract for wBAN farms
+ * @author Wrap That Potassium <wrap-that-potassium@protonmail.com>
  *
  * @dev inspired by Beefy contract https://github.com/beefyfinance/beefy-contracts/blob/master/contracts/BIFI/zaps/BeefyZapUniswapV2.txt
  */
@@ -46,7 +47,7 @@ contract WBANFarmZap is Ownable, Pausable {
     }
 
     /**
-     * Zap in from token `tokenId`.
+     * @notice Zap in from token `tokenId`.
      * @param tokenIn the token to zap in from
      * @param tokenInAmount the amount of `tokenIn` to create liquidity from
      * @param tokenAmountOutMin the minimum amount of the other token from the pair expected with the swap
@@ -63,7 +64,7 @@ contract WBANFarmZap is Ownable, Pausable {
     }
 
     /**
-     * Zap in from token `tokenId`, using permit feature (EIP-2612).
+     * @notice Zap in from token `tokenId`, using permit feature (EIP-2612).
      * @param tokenIn the token to zap in from
      * @param tokenInAmount the amount of `tokenIn` to create liquidity from
      * @param tokenAmountOutMin the minimum amount of the other token from the pair expected with the swap
@@ -87,7 +88,7 @@ contract WBANFarmZap is Ownable, Pausable {
     }
 
     /**
-     * Zap in from "ETH".
+     * @notice Zap in from "ETH".
      * @param tokenAmountOutMin the minimum amount of the other token from the pair expected with the swap
      */
     function zapInFromETH(uint256 tokenAmountOutMin) external payable {
@@ -96,7 +97,7 @@ contract WBANFarmZap is Ownable, Pausable {
     }
 
     /**
-     * Zap out to token `desiredToken`, using permit feature (EIP-2612) of the LP token.
+     * @notice Zap out to token `desiredToken`, using permit feature (EIP-2612) of the LP token.
      * @param withdrawAmount amount of LP to withdraw
      * @param desiredToken the token to zap out to
      * @param desiredTokenOutMin the minimum amount of the other token from the pair expected with the swap
@@ -119,7 +120,7 @@ contract WBANFarmZap is Ownable, Pausable {
     }
 
     /**
-     * Zap out to token `desiredToken`.
+     * @notice Zap out to token `desiredToken`.
      * @param withdrawAmount amount of LP to withdraw
      * @param desiredToken the token to zap out to
      * @param desiredTokenOutMin the minimum amount of the other token from the pair expected with the swap
@@ -155,7 +156,7 @@ contract WBANFarmZap is Ownable, Pausable {
     }
 
     /**
-     * Estimate a swap from `tokenIn` for amount `fullInvestmentIn`
+     * @notice Estimate a swap from `tokenIn` for amount `fullInvestmentIn`
      * @param tokenIn the input token
      * @param fullInvestmentIn the input amount
      * @return swapAmountIn the input amount which would be swapped
