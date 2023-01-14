@@ -18,5 +18,5 @@
 			]
 		},
 	},
-	"include": ["./hardhat.config.ts", "./scripts", "./deploy", "./test"]
+	"include": ["./hardhat.config.ts", "./scripts", "./deploy", "./test", "src/config.ts"]
 }

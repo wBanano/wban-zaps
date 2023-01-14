@@ -14,6 +14,7 @@ import "hardhat-contract-sizer";
 // import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-etherscan";
 import "hardhat-abi-exporter";
+import "hardhat-deploy";
 
 let mnemonic = process.env.MNEMONIC;
 if (!mnemonic) {
@@ -60,12 +61,36 @@ const config: HardhatUserConfig = {
 			},
 			// url: "http://127.0.0.1:8545/",
 		},
+		bsc: {
+			url: 'https://bsc-dataseed.binance.org/',
+			accounts,
+			chainId: 56,
+		},
 		polygon: {
 			url: 'https://polygon-rpc.com',
 			accounts,
 			chainId: 137,
 			gasMultiplier: 1.1,
-			//gasPrice: 60000000000,
+		},
+		fantom: {
+			url: 'https://rpc.ftm.tools',
+			accounts,
+			chainId: 250,
+			gasMultiplier: 1.4,
+			//gasPrice: 4000000000000,
+		},
+		ethereum: {
+			url: "https://rpc.ankr.com/eth",
+			accounts,
+			chainId: 1,
+			timeout: 600_000, // 10 minutes
+			gasMultiplier: 1.2,
+		},
+		arbitrum: {
+			url: 'https://arb1.arbitrum.io/rpc',
+			accounts,
+			chainId: 42161,
+			gasMultiplier: 1.1,
 		},
 	},
 	mocha: {
