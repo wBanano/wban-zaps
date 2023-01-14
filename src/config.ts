@@ -21,8 +21,8 @@ const config: Record<string, ZapConfig> = {
 	},
 	arbitrum: {
 		router: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
-		pair: "", // TODO:
-		weth: "", // TODO:
+		pair: "0xBD80923830B1B122dcE0C446b704621458329F1D",
+		weth: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
 	},
 }
 
