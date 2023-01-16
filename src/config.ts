@@ -1,8 +1,8 @@
 const config: Record<string, ZapConfig> = {
 	bsc: {
-		router: "", // TODO:
-		pair: "", // TODO:
-		weth: "", // TODO:
+		router: "0x10ED43C718714eb63d5aA57B78B54704E256024E",
+		pair: "0x351A295AfBAB020Bc7eedcB7fd5A823c01A95Fda",
+		weth: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
 	},
 	polygon: {
 		router: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
@@ -15,9 +15,9 @@ const config: Record<string, ZapConfig> = {
 		weth: "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83",
 	},
 	ethereum: {
-		router: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // TODO: check
-		pair: "0x1f249F8b5a42aa78cc8a2b66EE0bb015468a5f43", // TODO: check
-		weth: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // TODO: check
+		router: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+		pair: "0x1f249F8b5a42aa78cc8a2b66EE0bb015468a5f43",
+		weth: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
 	},
 	arbitrum: {
 		router: "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",

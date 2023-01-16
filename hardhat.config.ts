@@ -84,7 +84,8 @@ const config: HardhatUserConfig = {
 			accounts,
 			chainId: 1,
 			timeout: 600_000, // 10 minutes
-			gasMultiplier: 1.2,
+			// gasMultiplier: 1.1,
+			gasPrice: 14_000_000_000,
 		},
 		arbitrum: {
 			url: 'https://arb1.arbitrum.io/rpc',
